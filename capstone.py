@@ -43,33 +43,48 @@ with st.form("Population-Form"):
     col1, col2, col3 = st.columns(3)
     with col1:
         st.write("Choose a Starting Date")
-        start_quarter = st.selectbox(label="Quarter",options=quarter,key="start_q")
-        start_year = st.slider("Year",min_value=year_min_value, max_value=year_max_value,key="start_y",step=1)
+        start_quarter = st.selectbox(label="Quarter", options=quarter, key="start_q")
+        start_year = st.slider(
+            "Year",
+            min_value=year_min_value,
+            max_value=year_max_value,
+            key="start_y",
+            step=1,
+        )
 
     with col2:
         st.write("Choose an End Date")
-        end_quarter = st.selectbox(label="Quarter",options=quarter,key="end_q")
-        end_year = st.slider("Year",min_value=year_min_value, max_value=year_max_value,key="end_y",step=1)
-        
+        end_quarter = st.selectbox(label="Quarter", options=quarter, key="end_q")
+        end_year = st.slider(
+            "Year",
+            min_value=year_min_value,
+            max_value=year_max_value,
+            key="end_y",
+            step=1,
+        )
+
     with col3:
         st.write("Choose a Location")
-        target = st.selectbox(label="Choose a Location",options=df.columns[1:].sort_values(), index=0)
+        target = st.selectbox(
+            label="Choose a Location", options=df.columns[1:].sort_values(), index=0
+        )
 
-
-    submit = st.form_submit_button("Analyse",type="primary")
+    submit = st.form_submit_button("Analyse", type="primary")
 
 start_date = f"{start_quarter} {start_year}"
 end_date = f"{end_quarter} {end_year}"
 
+
 def format_date_for_comparision(date):
     if date[1] == 2:
-        return float(date[2:])*0.25
+        return float(date[2:]) * 0.25
     elif date[1] == 3:
-        return float(date[2:])*0.50
+        return float(date[2:]) * 0.50
     elif date[1] == 4:
-        return float(date[2:])*0.75
+        return float(date[2:]) * 0.75
     else:
         return float(date[2:])
+
 
 def end_before_start(start_date, end_date):
     num_start_date = format_date_for_comparision(start_date)
@@ -79,55 +94,59 @@ def end_before_start(start_date, end_date):
         return True
     else:
         return False
-    
+
 
 def display_dashboard(start_date, end_date, target):
-    tab1,tab2 = st.tabs(["Population Change","Compare"])
+    tab1, tab2 = st.tabs(["Population Change", "Compare"])
 
     with tab1:
         st.subheader(f"Population change from {start_date} to {end_date}")
 
-        col1,col2 = st.columns(2)
+        col1, col2 = st.columns(2)
 
         with col1:
-            initial = df.loc[df["Quarter"] == start_date,target].item()
-            final = df.loc[df["Quarter"] == end_date,target].item()
-            percentage_diff = round((final-initial)/initial,2)
+            initial = df.loc[df["Quarter"] == start_date, target].item()
+            final = df.loc[df["Quarter"] == end_date, target].item()
+            percentage_diff = round((final - initial) / initial, 2)
             delta = f"{percentage_diff}%"
-            st.metric(start_date,value=initial)
-            st.metric(end_date,final,delta=delta)
-        
-        with col2:
-            start_idx = df.loc[df["Quarter"]==start_date].index.item()
-            end_idx = df.loc[df["Quarter"]==end_date].index.item()
+            st.metric(start_date, value=initial)
+            st.metric(end_date, final, delta=delta)
 
-            filtered_df = df.iloc[start_idx:end_idx+1]
-            fig,ax = plt.subplots()
-            ax.plot(filtered_df['Quarter'],filtered_df[target])
+        with col2:
+            start_idx = df.loc[df["Quarter"] == start_date].index.item()
+            end_idx = df.loc[df["Quarter"] == end_date].index.item()
+
+            filtered_df = df.iloc[start_idx : end_idx + 1]
+            fig, ax = plt.subplots()
+            ax.plot(filtered_df["Quarter"], filtered_df[target])
             ax.set_xlabel("Population")
             ax.set_ylabel("Target")
-            ax.set_xticks([filtered_df["Quarter"].iloc[0], filtered_df["Quarter"].iloc[-1]])
+            ax.set_xticks(
+                [filtered_df["Quarter"].iloc[0], filtered_df["Quarter"].iloc[-1]]
+            )
             fig.autofmt_xdate()
             st.pyplot(fig)
 
     with tab2:
         st.subheader("Compare with Other Locations")
-        all_targets = st.multiselect("Choose Other Location",options=df.columns[1:],default=target)
+        all_targets = st.multiselect(
+            "Choose Other Location", options=df.columns[1:], default=target
+        )
 
         fig, ax = plt.subplots()
         for each in all_targets:
-            ax.plot(filtered_df['Quarter'],filtered_df[each])
+            ax.plot(filtered_df["Quarter"], filtered_df[each])
         ax.set_xlabel("Time")
         ax.set_ylabel("Population")
         ax.set_xticks([filtered_df["Quarter"].iloc[0], filtered_df["Quarter"].iloc[-1]])
         fig.autofmt_xdate()
-        
+
         st.pyplot(fig)
 
 
 if start_date not in df["Quarter"].to_list() or end_date not in df["Quarter"].to_list():
     st.error("No Data available. Check your quarter and year selection")
-elif end_before_start(start_date,end_date):
+elif end_before_start(start_date, end_date):
     st.error("Dates don't work, Start Date must be before end date")
 else:
-    display_dashboard(start_date,end_date,target)
+    display_dashboard(start_date, end_date, target)
