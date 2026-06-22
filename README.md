@@ -8,3 +8,4 @@ git commit -m "lenovo commit"
 git push origin main
 
 git pull origin main
+uv sync
